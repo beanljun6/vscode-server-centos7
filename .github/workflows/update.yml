@@ -71,6 +71,7 @@ jobs:
           gh pr edit '${{ env.pr_url }}' --add-label bot
       - name: Create issue on failure
         if: failure()
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
