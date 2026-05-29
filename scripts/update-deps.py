@@ -53,7 +53,7 @@ def get_latest_vscode(name):
     res = urllib.request.urlopen(url)
     dat = json.load(res)
     res.close()
-    return dat['version'], dat['url'], dat['sha256hash']
+    return dat['productVersion'], dat['version'], dat['url'], dat['sha256hash']
 
 
 def get_latest_binutils_tar():
@@ -193,27 +193,39 @@ def update_deps_info():
 
     eprint('updating vscode_cli_arm64...')
     latest['vscode_cli_arm64_filename'] = "vscode-cli-arm64.tar.gz"
-    latest['vscode_cli_arm64_version'], latest['vscode_cli_arm64_url'], latest['vscode_cli_arm64_sha256'] = get_latest_vscode('cli-linux-arm64')
+    api_prod_ver, latest['vscode_cli_arm64_version'], latest['vscode_cli_arm64_url'], latest['vscode_cli_arm64_sha256'] = get_latest_vscode('cli-linux-arm64')
 
     eprint('updating vscode_cli_armhf...')
     latest['vscode_cli_armhf_filename'] = "vscode-cli-armhf.tar.gz"
-    latest['vscode_cli_armhf_version'], latest['vscode_cli_armhf_url'], latest['vscode_cli_armhf_sha256'] = get_latest_vscode('cli-linux-armhf')
+    _, latest['vscode_cli_armhf_version'], latest['vscode_cli_armhf_url'], latest['vscode_cli_armhf_sha256'] = get_latest_vscode('cli-linux-armhf')
 
     eprint('updating vscode_cli_x64...')
     latest['vscode_cli_x64_filename'] = "vscode-cli-x64.tar.gz"
-    latest['vscode_cli_x64_version'], latest['vscode_cli_x64_url'], latest['vscode_cli_x64_sha256'] = get_latest_vscode('cli-linux-x64')
+    _, latest['vscode_cli_x64_version'], latest['vscode_cli_x64_url'], latest['vscode_cli_x64_sha256'] = get_latest_vscode('cli-linux-x64')
 
     eprint('updating vscode_server_arm64...')
     latest['vscode_server_arm64_filename'] = "vscode-srv-arm64.tar.gz"
-    latest['vscode_server_arm64_version'], latest['vscode_server_arm64_url'], latest['vscode_server_arm64_sha256'] = get_latest_vscode('server-linux-arm64')
+    _, latest['vscode_server_arm64_version'], latest['vscode_server_arm64_url'], latest['vscode_server_arm64_sha256'] = get_latest_vscode('server-linux-arm64')
 
     eprint('updating vscode_server_armhf...')
     latest['vscode_server_armhf_filename'] = "vscode-srv-armhf.tar.gz"
-    latest['vscode_server_armhf_version'], latest['vscode_server_armhf_url'], latest['vscode_server_armhf_sha256'] = get_latest_vscode('server-linux-armhf')
+    _, latest['vscode_server_armhf_version'], latest['vscode_server_armhf_url'], latest['vscode_server_armhf_sha256'] = get_latest_vscode('server-linux-armhf')
 
     eprint('updating vscode_server_x64...')
     latest['vscode_server_x64_filename'] = "vscode-srv-x64.tar.gz"
-    latest['vscode_server_x64_version'], latest['vscode_server_x64_url'], latest['vscode_server_x64_sha256'] = get_latest_vscode('server-linux-x64')
+    _, latest['vscode_server_x64_version'], latest['vscode_server_x64_url'], latest['vscode_server_x64_sha256'] = get_latest_vscode('server-linux-x64')
+
+    old_vscode_ver = get_current_vscode_prod_ver()
+    if old_vscode_ver and \
+            tuple(int(x) for x in api_prod_ver.split('.')) < \
+            tuple(int(x) for x in old_vscode_ver.split('.')):
+        eprint('API returned older vscode version (%s < %s), keeping current vscode entries' % (api_prod_ver, old_vscode_ver))
+        for k in list(latest.keys()):
+            if k.startswith('vscode_'):
+                latest[k] = verdict[k]
+        new_vscode_ver = old_vscode_ver
+    else:
+        new_vscode_ver = api_prod_ver
 
     fo = open(deps_path, "w")
     for k in sorted(latest.keys()):
@@ -221,8 +233,10 @@ def update_deps_info():
     fo.close()
 
     eprint('updating vscode product version...')
-    old_vscode_ver = get_current_vscode_prod_ver()
-    new_vscode_ver = update_latest_vscode_prod_ver()
+    version_txt_path = os.path.join(os.path.dirname(__file__), "../version.txt")
+    fo = open(version_txt_path, "w")
+    fo.write(str(new_vscode_ver).strip() + "\n")
+    fo.close()
     update_dict_add(updict, 'vscode', old_vscode_ver, new_vscode_ver)
 
     msg_list = []
