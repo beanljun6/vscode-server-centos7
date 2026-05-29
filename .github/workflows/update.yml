@@ -69,6 +69,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         if: ${{ env.pr_url }}
         run: |
+          gh label create bot --color 0075ca 2>/dev/null || true
           gh pr edit '${{ env.pr_url }}' --add-label bot
       - name: Create issue on failure
         if: failure()
