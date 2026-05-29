@@ -60,6 +60,7 @@ static int opt_patch_now = 0;
 static FILE *logfp = NULL;
 static const char *glibc_interp = LIBDIR "/" INTERP;
 static char glibc_interp_new[PATH_MAX];
+static char gnudir_path[PATH_MAX];
 static char serverdir_path[PATH_MAX];
 static char extdir_path[PATH_MAX];
 static char extjson_path[PATH_MAX];
@@ -209,6 +210,16 @@ static int setup_paths(void)
         goto end;
     }
 
+    siz = snprintf(gnudir_path, PATH_MAX, "%s/gnu", dname);
+    if (siz < 0) {
+        E("snprintf(): %s", dname);
+        goto end;
+    } else if (siz >= PATH_MAX) {
+        errno = ENAMETOOLONG;
+        E("snprintf(): %s", dname);
+        goto end;
+    }
+
     siz = snprintf(realcli_path, PATH_MAX, "%s/%s-cli", dname, fname);
     if (siz < 0) {
         E("snprintf(): %s", dname);
@@ -340,7 +351,8 @@ static int patch_file(const char *fpath, const struct stat *sb)
     errno = 0;
     E("Patching %s ...", fpath);
 
-    if (patchelf_set_interpreter(fpath, tmppath, glibc_interp_new, TRUE)) {
+    if (patchelf_set_interpreter_and_rpath(fpath, tmppath, glibc_interp_new,
+                                           gnudir_path, TRUE)) {
         goto end;
     }
 
