@@ -61,8 +61,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         if: ${{ env.has_updates }}
         run: |
-            gh pr close bot --delete-branch 2>/dev/null || true
-            git push --force -u origin bot
+            gh pr close bot 2>/dev/null || true
             pr_url=$(gh pr create --head bot --base master --title "[BOT] Update dependencies" --body "Update dependencies")
             echo "pr_url=$pr_url" >> $GITHUB_ENV
       - name: Lable PR
