@@ -65,7 +65,7 @@ jobs:
             echo "pr_url=$pr_url" >> $GITHUB_ENV
       - name: Lable PR
         env:
-          GITHUB_TOKEN: ${{ secrets.pr_token }}
+          GITHUB_TOKEN: ${{ github.token }}
         if: ${{ env.pr_url }}
         run: |
           gh pr edit '${{ env.pr_url }}' --add-label bot
